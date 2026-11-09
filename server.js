@@ -16,6 +16,13 @@ io.on('connection', (socket) => {
     socket.emit('roomList', Object.keys(activeRooms));
 
     socket.on('createRoom', () => {
+        // Очищаем старые комнаты этого же игрока, чтобы не было дублей
+        for (let code in activeRooms) {
+            if (activeRooms[code].host === socket.id) {
+                delete activeRooms[code];
+            }
+        }
+
         const roomCode = Math.random().toString(36).substring(2, 6).toUpperCase();
         activeRooms[roomCode] = { host: socket.id, playerCount: 1 };
         socket.join(roomCode);
@@ -48,6 +55,7 @@ io.on('connection', (socket) => {
         socket.to(data.roomCode).emit('ballMoved', data);
     });
 
+    // ВОТ ЗДЕСЬ СЕРВЕР ОЧИЩАЕТ КОМНАТЫ ПРИ ВЫХОДЕ
     socket.on('disconnect', () => {
         for (let code in activeRooms) {
             if (activeRooms[code].host === socket.id) {
